@@ -9,14 +9,14 @@
 Servo left_motor;
 Servo right_motor;
 SoftwareSerial BLE(3, 2); // RX, TX
-int status_led = 8;
+const int status_led = 8;
 int throttle_value = 0;
 const int min_PWM = 1000;
-const int max_PWM = 1500;
+const int max_PWM = 1300;
 const int left_motor_offset = 10;
 const int right_motor_offset = 0;
 String packet_RX = "";
-int data;
+unsigned int data;
 unsigned long time_var;
 
 void setup() {
@@ -35,31 +35,36 @@ void setup() {
 
   // setup the bluetooth device
   BLE.begin(9600);
+  BLE.setTimeout(30);
+
 }
 
 void loop() {
   while(true){
-    if(BLE.available()) {
+    if(BLE.available()>0) {
+//      Serial.println("Stuck doing string shit");
       time_var = micros();
       packet_RX = BLE.readString();
-      Serial.println(packet_RX);
       data = packet_RX.toInt();
+      Serial.println(data);
       digitalWrite(status_led, HIGH);
+      if(data == 0 || data < 1000 || data > max_PWM){
+        right_motor.writeMicroseconds(min_PWM);
+        left_motor.writeMicroseconds(min_PWM);
+        BLE.write(10);
+      }
       right_motor.writeMicroseconds(data + right_motor_offset);
       left_motor.writeMicroseconds(data + left_motor_offset);
     }
-    else if(time_var - micros() > 500000){
+    else if((time_var - micros()) >= 4294929000){
+      Serial.print("BLE timeout:  ");
+      Serial.println(time_var-micros());
       right_motor.writeMicroseconds(min_PWM);
       left_motor.writeMicroseconds(min_PWM);
       digitalWrite(status_led, LOW);
       BLE.write(10);
     }
-    else{
-      right_motor.writeMicroseconds(min_PWM);
-      left_motor.writeMicroseconds(min_PWM);
-      digitalWrite(status_led, LOW);
-      BLE.write(10);
-    }
+//    Serial.println("Doing other shit");
     delay(10);
   }
 }

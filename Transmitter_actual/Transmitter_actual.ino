@@ -2,19 +2,18 @@
  * BLE Controller for my electric longboard
  * 
  */
-
-
 #include <SoftwareSerial.h>
 #include <Servo.h>
 SoftwareSerial BLE(3, 2); // RX, TX
 int status_led = 8;
 const int throttle_pin = A0;
 int throttle_value = 0;
-const int min_PWM = 1000;
-const int max_PWM = 1500;
-const int min_ADC = 315;
-const int max_ADC = 500;
+const float min_PWM = 1000;
+const float max_PWM = 1300;
+const float min_ADC = 370;
+const float max_ADC = 630;
 float throttle_calc = 0.0;
+int last_throttle_val = 0;
 
 
 void setup() {
@@ -37,7 +36,8 @@ void loop() {
   if (BLE.available()) {
     if(BLE.read() == 10){
       Serial.println("Received Error");
-      // BLE.print(min_PWM);
+      BLE.print(min_PWM);
+      BLE.println("");
     }
     digitalWrite(status_led, HIGH);
   }
@@ -45,7 +45,8 @@ void loop() {
 
   // send what is sent over computer serial port.
   if (Serial.available()) {
-    // BLE.write(Serial.read());
+    BLE.print(Serial.read());
+    BLE.println("");
     digitalWrite(status_led, HIGH);
   }
   else{digitalWrite(status_led,LOW);}
@@ -67,13 +68,14 @@ void loop() {
   else{ // span what we want
     throttle_calc = min_PWM + ((throttle_value - min_ADC)*((max_PWM - min_PWM)/(max_ADC - min_ADC)));
   }
-  throttle_value = (int) throttle_calc;
+  throttle_value = (int) ((throttle_calc + (3*last_throttle_val))/4);
+  if(throttle_value < min_PWM){throttle_value = min_PWM;}
   Serial.print(throttle_value); Serial.print("   ");
-//  throttle_value = map(throttle_value, min_PWM, max_PWM, 0, 255);
   Serial.println(throttle_value);
   BLE.print(throttle_value);
   BLE.println("");
-  delay(200);
+  delay(100);
+  last_throttle_val = throttle_value;
 }
 
 
