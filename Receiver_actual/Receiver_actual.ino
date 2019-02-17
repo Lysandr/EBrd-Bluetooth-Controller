@@ -17,7 +17,7 @@ const int left_motor_offset = 10;
 const int right_motor_offset = 0;
 String packet_RX = "";
 unsigned int data;
-unsigned long time_var;
+unsigned long time_var = 0;
 
 void setup() {
   // perform motor setup
@@ -42,7 +42,6 @@ void setup() {
 void loop() {
   while(true){
     if(BLE.available()>0) {
-//      Serial.println("Stuck doing string shit");
       time_var = micros();
       packet_RX = BLE.readString();
       data = packet_RX.toInt();
@@ -56,15 +55,15 @@ void loop() {
       right_motor.writeMicroseconds(data + right_motor_offset);
       left_motor.writeMicroseconds(data + left_motor_offset);
     }
-    else if((time_var - micros()) >= 4294929000){
+    else if((micros() - time_var) >= 700000){
       Serial.print("BLE timeout:  ");
-      Serial.println(time_var-micros());
+      Serial.println(micros() - time_var);
       right_motor.writeMicroseconds(min_PWM);
       left_motor.writeMicroseconds(min_PWM);
       digitalWrite(status_led, LOW);
       BLE.write(10);
     }
-//    Serial.println("Doing other shit");
+    else {}
     delay(10);
   }
 }
