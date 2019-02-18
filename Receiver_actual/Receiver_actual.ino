@@ -35,8 +35,7 @@ void setup() {
 
   // setup the bluetooth device
   BLE.begin(9600);
-  BLE.setTimeout(30);
-
+  BLE.setTimeout(0);
 }
 
 void loop() {
@@ -54,6 +53,7 @@ void loop() {
       }
       right_motor.writeMicroseconds(data + right_motor_offset);
       left_motor.writeMicroseconds(data + left_motor_offset);
+      delay(100);
     }
     else if((micros() - time_var) >= 700000){
       Serial.print("BLE timeout:  ");
